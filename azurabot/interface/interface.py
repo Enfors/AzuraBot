@@ -20,8 +20,9 @@ class Interface(azurabot.plugins.plugin.Plugin):
     in the external world, to which users connect.
     """
 
-    def __init__(self, config: configparser.ConfigParser, bot_inbox: asyncio.Queue,
-                 name: str="(unnamed interface plugin)"):
+    def __init__(self, config: configparser.ConfigParser,
+                 bot_inbox: asyncio.Queue,
+                 name: str = "(unnamed interface plugin)"):
         self.config = config
         self.bot_inbox = bot_inbox
 
