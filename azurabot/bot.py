@@ -73,10 +73,10 @@ class Bot:
 
         reply_msg = Msg(direction=direction,
                         user=old_msg.user,
-                        reply_to=new_msg.reply_to,
+                        reply_to=old_msg.reply_to,
                         text=text)
         await old_msg.put(reply_msg)
-            
+
     async def _load_all_plugins(self):
         """
         Load all plugins.
