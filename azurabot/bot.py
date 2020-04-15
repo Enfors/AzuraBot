@@ -220,8 +220,8 @@ class Bot:
                   f"Using the one in {existing_intent.intent_file}.")
             return False
 
-        print(f"[bot] Adding intent {intent.name}.")
-        self.intents[intent.name] = intent
+        print(f"[bot] - Adding intent {intent.name}.")
+        self.intents[intent.name.lower()] = intent
 
     async def _start_cron_task(self):
         """This function starts the background timer task. For example, if
@@ -280,7 +280,7 @@ class Bot:
         text = msg.text
         intent_name = text.split(" ")[0]
         try:
-            intent = self.intents[intent_name](self)
+            intent = self.intents[intent_name.lower()](self)
             print(f"[bot] Intent: \"{intent_name}\"")
             return intent
         except KeyError:
