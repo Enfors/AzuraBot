@@ -1,13 +1,34 @@
-* TODO Communication basics
+* DONE Communication basics
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-15 ons 18:26]
+:END:
 
-** TODO current_address
+** DONE current_address
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-15 ons 18:26]
+:END:
 
-** TODO User.tell()
+** DONE User.tell()
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-15 ons 18:26]
+:END:
 
-** TODO User.ask()
-
-* TODO Regex intent selection support
+** DONE User.ask()
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-15 ons 18:26]
+:END:
 
 * TODO Conversion plugin
 
-** [0-9]+ inches
+** DONE Rudimentary Fahrenheit to Centigrade
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-15 ons 18:27]
+:END:
+
+** TODO Regex support for selecting conversion type
+
+** TODO [0-9]+ inches
+
+* TODO Weather plugin
+
+* TODO Regex intent selection support
