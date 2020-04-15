@@ -19,7 +19,8 @@ class Plugin(AsyncInterface):
     async def send_msg(self, text: str):
         await asyncio.sleep(1)
 
-        user = azurabot.user.User(identifiers={"testinterface": "Tester"})
+        user = azurabot.user.User(self.bot,
+                                  identifiers={"testinterface": "Tester"})
 
         self.log("Sending...")
         await self.send_user_text_to_bot(user, "Hello, bot!")

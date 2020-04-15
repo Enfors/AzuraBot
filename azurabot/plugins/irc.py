@@ -51,7 +51,8 @@ class Plugin(AsyncInterface):
             if not irc_msg:
                 continue
 
-            user = azurabot.user.User(identifiers={"irc": irc_msg.sender})
+            user = azurabot.user.User(self.bot,
+                                      identifiers={"irc": irc_msg.sender})
 
             if irc_msg.msg_type == "PRIVMSG" and \
                irc_msg.channel == self.nickname:

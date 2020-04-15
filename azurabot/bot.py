@@ -2,8 +2,8 @@
 
 import asyncio
 import configparser
-import os
 import importlib
+import os
 
 import azurabot.user
 import azurabot.msg
@@ -15,6 +15,8 @@ from azurabot.user import User
 """
 AzuraBot's most important file.
 """
+
+address_split_char = "#"
 
 
 class Bot:
@@ -29,6 +31,7 @@ class Bot:
         self.config.read("etc/azurabot.conf")
 
         self.plugins = []
+        self.plugin_inboxes = {}
 
         self.intents = {}
 
@@ -61,6 +64,44 @@ class Bot:
         #
         await self._main_loop()
 
+    #
+    # Public functions
+    #
+
+    async def send(self, msg: Msg, address: str):
+        """This is a low level function for sending a Msg to an address.
+        Most other sending functions route the message through this function.
+        """
+        ident, interface = address.split(address_split_char)
+
+        try:
+            inbox = self.plugin_inboxes[interface]
+        except AttributeError:
+            raise AzuraBotError(f"There is no inbox registered for "
+                                f"'{interface} (address {address})")
+
+        print(f"[bot] Private message: AzuraBot->{address}: {msg.text}")
+        await inbox.put(msg)
+
+    async def send_to_user(self, user: User, msg: Msg, address: str = None):
+        """This is a higher level function that send(). It sends a Msg to the
+        specified user. If no address is specified, then the user's last used
+        address (user.current_address) is used.
+        """
+        if address is None:
+            address = user.current_address
+
+        await self.send(msg, address)
+
+    async def send_text_to_user(self, user: User, text: str,
+                                address: str = None):
+        msg = Msg(direction=azurabot.msg.FROM_BOT,
+                  user=user,
+                  reply_to=self.bot_inbox,  # Is this right?
+                  text=text)
+
+        await self.send_to_user(user, msg, address)
+
     async def reply(self, old_msg: Msg, text: str):
         """Given a previous message old_msg, this function replies to it with
         the text in the text argument.
@@ -76,6 +117,10 @@ class Bot:
                         reply_to=old_msg.reply_to,
                         text=text)
         await old_msg.put(reply_msg)
+
+    #
+    # Private functions
+    #
 
     async def _load_all_plugins(self):
         """
@@ -108,9 +153,17 @@ class Bot:
         except ModuleNotFoundError:
             print("Plugin not found:", file_name.replace(".", "/") + ".py")
             return False
-        plugin = plugin_file.Plugin(config=self.config,
-                                    bot_inbox=self.bot_inbox,
+        plugin = plugin_file.Plugin(bot=self,
+                                    config=self.config,
                                     name=base_name)
+
+        try:
+            self.plugin_inboxes[base_name] = plugin.inbox
+        except AttributeError:
+            # This plugin has no inbox; that's fine. It's obviously not
+            # an interface plugin.
+            pass
+
         return plugin
 
     async def _main_loop(self):

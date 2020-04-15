@@ -20,12 +20,10 @@ class Interface(azurabot.plugins.plugin.Plugin):
     in the external world, to which users connect.
     """
 
-    def __init__(self, config: configparser.ConfigParser,
-                 bot_inbox: asyncio.Queue,
+    def __init__(self, bot, config: configparser.ConfigParser,
                  name: str = "(unnamed interface plugin)"):
+        self.bot = bot
         self.config = config
-        self.bot_inbox = bot_inbox
-
         self.name = name
         self.inbox = asyncio.Queue()
 
@@ -40,7 +38,7 @@ class Interface(azurabot.plugins.plugin.Plugin):
         Send any kind of message to the bot.
         """
         msg.direction = azurabot.msg.TO_BOT
-        await self.bot_inbox.put(msg)
+        await self.bot.bot_inbox.put(msg)
 
     async def send_user_text_to_bot(self, user: User, text: str):
         """

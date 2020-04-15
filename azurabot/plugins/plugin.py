@@ -9,10 +9,10 @@ import configparser
 
 class Plugin:
 
-    def __init__(self, config: configparser.ConfigParser, bot_inbox: asyncio.Queue,
+    def __init__(self, bot, config: configparser.ConfigParser,
                  name="(unnamed plugin)"):
+        self.bot = bot
         self.config = config
-        self.bot_inbox = bot_inbox
         self.name = name
 
     async def start(self):

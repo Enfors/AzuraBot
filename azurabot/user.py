@@ -4,6 +4,8 @@ The user class file.
 
 import asyncio
 
+import azurabot
+
 
 class User:
     """
@@ -44,7 +46,8 @@ class User:
       the bot's user database).
     """
 
-    def __init__(self, identifiers: dict):
+    def __init__(self, bot, identifiers: dict):
+        self.bot = bot
         self.name = None
         self.identified = False
         self.identifiers = identifiers
@@ -77,6 +80,14 @@ class User:
         self.name = self.identifiers[service]
         self.identified = True
         return False
+
+    async def tell(self, text):
+        await self.bot.send_text_to_user(self, text)
+
+    async def ask(self, question_text):
+        await self.bot.send_text_to_user(self, question_text)
+        answer = await self.inbox.get()
+        return answer.text
 
     def __str__(self):
         return f"User: {self.name} [{self.current_address}]"
