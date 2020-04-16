@@ -31,4 +31,11 @@
 
 * TODO Weather plugin
 
+** DONE Basic formatting
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2020-04-16 tor 00:28]
+:END:
+
+** TODO Advanced formatting
+
 * TODO Regex intent selection support
