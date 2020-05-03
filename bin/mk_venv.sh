@@ -12,4 +12,4 @@ virtualenv -p /usr/bin/python3.7 AzuraBot
 
 source AzuraBot/bin/activate
 pip install --upgrade pip
-
+pip install aiohttp botymcbotface

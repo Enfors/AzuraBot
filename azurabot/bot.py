@@ -152,7 +152,7 @@ class Bot:
             plugin_file = importlib.import_module(file_name)
         except ModuleNotFoundError:
             print("Plugin not found:", file_name.replace(".", "/") + ".py")
-            return False
+            raise
         plugin = plugin_file.Plugin(bot=self,
                                     config=self.config,
                                     name=base_name)
