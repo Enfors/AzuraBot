@@ -30,18 +30,11 @@ async def weather(request):
     req = await request.json()
 
     location = req["queryResult"]["parameters"]["geo-city"]
-    try:
-        date = req["queryResult"]["parameters"]["date"]
-        if date:
-            date = dateutil.parser.parse(date)
-    except KeyError:
-        pass
-
-    if not date:
+    date = req["queryResult"]["parameters"]["date"]
+    if date:
+        date = dateutil.parser.parse(date)
+    else:
         date = datetime.datetime.today()
-        print(f"== Defaulting to today: {date}")
-
-    print(f"Date: {date}")
 
     weekday = calendar.day_name[date.weekday()]
 
@@ -196,8 +189,12 @@ class WeatherForecast:
 
         desc = ", then ".join(descs)
 
-        report = f"{period.title()}: {desc} with " \
-            f"temperatures between {lowest} and {highest} C.\n"
+        report = f"{period.title()}: {desc} with temperatures "
+
+        if lowest == highest:
+            report += f"around {highest} degrees.\n"
+        else:
+            f"between {lowest} and {highest} degrees.\n"
         return report
 
     async def get_complete_forecast(self, location: str):
