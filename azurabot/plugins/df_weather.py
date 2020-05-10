@@ -27,6 +27,8 @@ async def weather(request):
                             "Do I look like John Polman to you?")
     }
 
+    print("[df_weather] Contact.")
+
     req = await request.json()
 
     location = req["queryResult"]["parameters"]["geo-city"]
@@ -194,7 +196,7 @@ class WeatherForecast:
         if lowest == highest:
             report += f"around {highest} degrees.\n"
         else:
-            f"between {lowest} and {highest} degrees.\n"
+            report += f"between {lowest} and {highest} degrees.\n"
         return report
 
     async def get_complete_forecast(self, location: str):
