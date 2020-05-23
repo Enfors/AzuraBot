@@ -5,6 +5,8 @@ import configparser
 import importlib
 import os
 
+import motor.motor_asyncio
+
 import azurabot.user
 import azurabot.msg
 
@@ -43,6 +45,10 @@ class Bot:
         # print(user)
         # print(msg)
         self.bot_inbox = asyncio.Queue()
+
+        # Initialize MongoDB
+        client = motor.motor_asyncio.AsyncIOMotorClient()
+        self.db = client["AzuraBotDB"]
 
         #
         # Step 1: Load all plugins
@@ -236,7 +242,7 @@ class Bot:
         user = await self._identify_msg_user(msg)
 
         if user.current_address not in self.online_users:
-            self.online_users[user.current_address] = user
+            user = await self._login_user(user)
             user.loop_task = asyncio.create_task(self._user_loop(user))
             # asyncio.gather(user.loop_task) # todo: Maybe shouldn't be here
         else:
@@ -244,6 +250,32 @@ class Bot:
 
         # print(f"Putting message in user box {user.inbox!r}")
         await user.inbox.put(msg)
+
+    async def _login_user(self, user):
+        self.online_users[user.current_address] = user
+
+        # See if this user exists in the collection
+        document = await self.db.users.find_one({"name": user.name})
+
+        if not document:
+            await self._save_user(user)
+
+        await self._save_user(user)
+        return user
+
+    async def _save_user(self, user):
+
+        # Create a document for this user
+        document = {"name": user.name}
+
+        old_doc = await self.db.users.find_one({"name": user.name})
+
+        if old_doc:
+            await self.db.users.replace_one({"name": user.name},
+                                            document)
+        else:
+            # Insert the user document into the database
+            await self.db.users.insert_one(document)
 
     async def _user_loop(self, user: azurabot.user.User):
         keep_running = True
