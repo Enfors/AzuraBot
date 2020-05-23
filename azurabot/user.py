@@ -49,6 +49,7 @@ class User:
     def __init__(self, bot, identifiers: dict):
         self.bot = bot
         self.name = None
+        self.uid = None
         self.identified = False
         self.identifiers = identifiers
         #self.msgs = list()

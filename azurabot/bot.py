@@ -4,6 +4,7 @@ import asyncio
 import configparser
 import importlib
 import os
+import pprint
 
 import motor.motor_asyncio
 
@@ -257,25 +258,55 @@ class Bot:
         # See if this user exists in the collection
         document = await self.db.users.find_one({"name": user.name})
 
-        if not document:
+        # If user exists, load it
+        if document:
+            await self._load_user(user)
+        else:
+            # If user doesn't exist, save it
             await self._save_user(user)
 
         await self._save_user(user)
         return user
 
+    async def _load_user(self, user):
+        document = await self.db.users.find_one({"name": user.name})
+        user.uid = document["uid"]
+        user.identifiers = document["identifiers"]
+
+        print(f"- User loaded: {user.name}:{user.uid} - {user.identifiers}")
+        return user
+
     async def _save_user(self, user):
+        if not user.uid:
+            user.uid = await self._get_next_uid()
 
         # Create a document for this user
-        document = {"name": user.name}
+        document = {"name": user.name,
+                    "uid": user.uid,
+                    "identifiers": user.identifiers}
 
         old_doc = await self.db.users.find_one({"name": user.name})
 
+        # If the user already exists...
         if old_doc:
+            # ... then replace it...
             await self.db.users.replace_one({"name": user.name},
                                             document)
         else:
-            # Insert the user document into the database
+            # ... otherwise, insert the user document into the database
             await self.db.users.insert_one(document)
+
+    async def _get_next_uid(self):
+        next_uid = 1
+        # I think "-uid" works for sorting, but not 100% positive.
+        cursor = self.db.users.find({"uid": {"$gt": 0}}).sort("-uid")
+
+        for document in await cursor.to_list(length=10):
+            uid = int(document["uid"])
+            if uid >= next_uid:
+                next_uid = uid + 1
+
+        return next_uid
 
     async def _user_loop(self, user: azurabot.user.User):
         keep_running = True
