@@ -12,7 +12,6 @@ from azurabot.interface.asyncinterface import AsyncInterface
 config = configparser.ConfigParser()
 config.read("etc/azurabot.conf")
 token = config["telegram"]["api_key"]
-print("Token:", token)
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=token)
@@ -22,9 +21,10 @@ dp = Dispatcher(bot)
 class Plugin(AsyncInterface):
 
     async def run(self):
-        # self.log("Telegram plugin started.")
+        self.log("Telegram plugin started.")
         # test_task = asyncio.create_task(self._telegram_test())
         # asyncio.gather(test_task)
+        print("Current loop: ", asyncio.get_running_loop())
         executor.start_polling(dp, loop=asyncio.get_running_loop(),
                                skip_updates=True)
 
