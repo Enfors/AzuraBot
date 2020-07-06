@@ -1,6 +1,7 @@
 import logging
 
 import configparser
+import pprint
 
 from aiogram import Bot, Dispatcher, types
 
@@ -19,8 +20,9 @@ class Plugin(AsyncInterface):
 
     async def run(self):
         self.log("Telegram plugin started.")
+        dp.register_message_handler(self.send_welcome)
         await dp.start_polling()
 
-    @dp.message_handler(commands=["start", "help"])
-    async def send_welcome(message: types.Message):
+    async def send_welcome(self, message: types.Message):
+        pprint.pprint(list(message))
         await message.reply("It works!")
