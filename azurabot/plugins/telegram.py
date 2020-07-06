@@ -1,11 +1,8 @@
 import logging
 
-import asyncio
 import configparser
 
-# from aiogram import Bot, Dispatcher, executor, types
 from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
 
 from azurabot.interface.asyncinterface import AsyncInterface
 
@@ -22,11 +19,7 @@ class Plugin(AsyncInterface):
 
     async def run(self):
         self.log("Telegram plugin started.")
-        # test_task = asyncio.create_task(self._telegram_test())
-        # asyncio.gather(test_task)
-        print("Current loop: ", asyncio.get_running_loop())
-        executor.start_polling(dp, loop=asyncio.get_running_loop(),
-                               skip_updates=True)
+        await dp.start_polling()
 
     @dp.message_handler(commands=["start", "help"])
     async def send_welcome(message: types.Message):
