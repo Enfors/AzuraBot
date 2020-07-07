@@ -4,8 +4,8 @@ The base Plugin class file.
 All other plugins inherit this class, directly or indirectly.
 """
 
-import asyncio
 import configparser
+
 
 class Plugin:
 
@@ -24,7 +24,7 @@ class Plugin:
         This is done by AsyncInterface's and ThreadedInterface's
         start() function, which typically should not be overridden.
         """
-        #self.log("This plugin doesn't have its own start() function.")
+        # self.log("This plugin doesn't have its own start() function.")
         pass
 
     async def run(self):
