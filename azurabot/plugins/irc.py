@@ -16,7 +16,7 @@ class Plugin(AsyncInterface):
     async def run(self):
         """This starts the plugin.
         """
-        self.log("IRC plugin started.")
+        self.bot.log_info("irc", "IRC plugin started.")
         await self._init_irc()
         asyncio.create_task(self._receive_loop())
         asyncio.create_task(self._send_loop())

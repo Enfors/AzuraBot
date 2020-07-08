@@ -1,9 +1,11 @@
-import logging
-
+import asyncio
 import configparser
+import logging
 import pprint
 
 from aiogram import Bot, Dispatcher, types
+
+import azurabot
 
 from azurabot.interface.asyncinterface import AsyncInterface
 
@@ -12,17 +14,66 @@ config.read("etc/azurabot.conf")
 token = config["telegram"]["api_key"]
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=token)
-dp = Dispatcher(bot)
+# bot = Bot(token=token)
+# dp = Dispatcher(bot)
+
+"""
+Message structure:
+
+[('message_id', 44),
+ ('from',
+  {'first_name': 'Christer',
+   'id': 1212215613,
+   'is_bot': False,
+   'language_code': 'en',
+   'last_name': 'Enfors',
+   'username': 'CEnfors'}),
+ ('chat',
+  {'first_name': 'Christer',
+   'id': 1212215613,
+   'last_name': 'Enfors',
+   'type': 'private',
+   'username': 'CEnfors'}),
+ ('date', 1594034606),
+ ('text', 'hoho')]
+"""
 
 
 class Plugin(AsyncInterface):
 
     async def run(self):
-        self.log("Telegram plugin started.")
-        dp.register_message_handler(self.send_welcome)
-        await dp.start_polling()
+        self.bot.log_info("Telegram", "Telegram plugin started.")
+        self.telegram_bot = Bot(token=token)
+        self.dp = Dispatcher(self.telegram_bot)
+        self.dp.register_message_handler(self._handle_inc_message)
+        asyncio.create_task(self._send_loop())
+        await self.dp.start_polling()
 
-    async def send_welcome(self, message: types.Message):
+    async def _handle_inc_message(self, message: types.Message):
         pprint.pprint(list(message))
         await message.reply("It works!")
+
+        username = message["chat"]["username"]
+        telegram_uid = message["from"]["id"]
+        text = message["text"]
+
+        user = azurabot.user.User(self.bot,
+                                  identifiers={"telegram": telegram_uid})
+
+        self.log(f"Message from {username}: '{text}'")
+        await self.send_user_text_to_bot(user, text)
+
+    async def _send_loop(self):
+        """Gets messages from AzuraBot, and sends them to Telegram.
+        """
+        keep_running = True
+
+        while keep_running:
+            msg = await self.inbox.get()
+            self.log(f"_send_loop: message to send: {msg.text}")
+            user = msg.user
+            await self._send_msg_to_telegram(user.identifiers["telegram"], msg)
+
+    async def _send_msg_to_telegram(self, user, msg):
+        telegram_uid = user.identifiers["telegram"]
+        await self.telegram_bot.send_message(telegram_uid, msg.text)

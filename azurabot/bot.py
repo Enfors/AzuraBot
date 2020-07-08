@@ -4,7 +4,6 @@ import asyncio
 import configparser
 import importlib
 import os
-import pprint
 
 import motor.motor_asyncio
 
@@ -19,6 +18,22 @@ from azurabot.user import User
 AzuraBot's most important file.
 """
 
+LOG_LEVEL_CRIT = 2
+LOG_LEVEL_ERR = 3
+LOG_LEVEL_WARN = 4
+LOG_LEVEL_NOTICE = 5
+LOG_LEVEL_INFO = 6
+LOG_LEVEL_DEBUG = 7
+
+log_level_words = {
+    2: "Critical",
+    3: "Error",
+    4: "Warning",
+    5: "Notice",
+    6: "Info",
+    7: "Debug"
+}
+
 address_split_char = "#"
 
 
@@ -32,6 +47,8 @@ class Bot:
         if not os.path.isfile("etc/azurabot.conf"):
             raise AzuraBotError("Config file etc/azurabot.conf not found")
         self.config.read("etc/azurabot.conf")
+        main_config = self.config["main"]
+        self.log_level = main_config.getint("log_level", LOG_LEVEL_NOTICE)
 
         self.plugins = []
         self.plugin_inboxes = {}
@@ -59,16 +76,19 @@ class Bot:
         #
         # Step 2: Start all plugins
         #
+        self.log_notice("bot", "AzuraBot running.")
         await self._start_all_plugins()
 
         #
         # Step 3: Start all background tasks
         #
+        self.log_notice("bot", "AzuraBot running.")
         await self._start_cron_task()
 
         #
         # Step 4: Enter main loop
         #
+        self.log_notice("bot", "AzuraBot running.")
         await self._main_loop()
 
     #
@@ -87,7 +107,8 @@ class Bot:
             raise AzuraBotError(f"There is no inbox registered for "
                                 f"'{interface} (address {address})")
 
-        print(f"[bot] Private message: AzuraBot->{address}: {msg.text}")
+        self.log("bot", "Private message: AzuraBot->{address}: {msg.text}",
+                 LOG_LEVEL_INFO)
         await inbox.put(msg)
 
     async def send_to_user(self, user: User, msg: Msg, address: str = None):
@@ -126,6 +147,57 @@ class Bot:
         await old_msg.put(reply_msg)
 
     #
+    # Public logging functions
+    #
+    # There are several public logging functions:
+    #
+    # - log(self, section: str, text: str, level: int)
+    #   This is the main logging function. The others are convenience
+    #   functions, which are ultimately routed through this one.
+    #
+    # - log_crit(self, section: str, text: str)
+    # - log_err(self, section: str, text: str)
+    # - log_warn(self, section: str, text: str)
+    # - log_notice(self, section: str, text: str)
+    # - log_info(self, section: str, text: str)
+    # - log_debug(self, section: str, text: str)
+    #
+    # The main logging function ("log"), will probably log using the
+    # standard python logging module. So why have my own functions?
+    # The reason is that then I can add the "section" argument, which
+    # will make it possible to have different log levels for different
+    # sections. For example, I might want debugging information to be
+    # logged from the telegram module, but not from everything else.
+
+    def log(self, section: str, text: str, level: int):
+        # print(f"Section: {section}")
+        # print(f"Level  : {level} ({self.log_level})")
+        # print(f"Text   : {text}")
+
+        if level > self.log_level:
+            return
+
+        print(f"[{section}:{log_level_words[level]}] {text}")
+
+    def log_crit(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_CRIT)
+
+    def log_err(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_ERR)
+
+    def log_warn(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_WARN)
+
+    def log_notice(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_NOTICE)
+
+    def log_info(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_INFO)
+
+    def log_debug(self, section: str, text: str):
+        self.log(section, text, LOG_LEVEL_DEBUG)
+
+    #
     # Private functions
     #
 
@@ -153,12 +225,13 @@ class Bot:
 
         base_name = file_name.split(".")[-1]
 
-        print("[bot] Loading plugin", base_name)
+        self.log("bot", f"Loading plugin {base_name}", LOG_LEVEL_INFO)
 
         try:
             plugin_file = importlib.import_module(file_name)
         except ModuleNotFoundError:
-            print("Plugin not found:", file_name.replace(".", "/") + ".py")
+            self.log("bot", "Plugin not found:" + file_name.replace(".", "/")
+                     + ".py", LOG_LEVEL_ERR)
             raise
         plugin = plugin_file.Plugin(bot=self,
                                     config=self.config,
@@ -180,7 +253,7 @@ class Bot:
             pass
             msg = await self.bot_inbox.get()
             text = msg.text
-            print("[bot] Received text: '%s'" % text)
+            self.log_info("bot", "Received text: '%s'" % text)
 
             # The reason why we start a task here, is because in the
             # future, the functio _handle_inc_msg() might be slow -
@@ -203,7 +276,7 @@ class Bot:
         start_tasks = []
 
         for plugin in self.plugins:
-            print(f"[bot] Starting plugin {plugin.name}...")
+            self.log_info("bot", f"Starting plugin {plugin.name}...")
             start_tasks.append(asyncio.create_task(plugin.start()))
 
             try:
@@ -222,12 +295,13 @@ class Bot:
     async def _add_intent(self, intent: Intent):
         if intent.name in self.intents:
             existing_intent = self.intents[intent.name]
-            print(f"[bot] Intent conflict: {intent.name} exists in both "
-                  f"{intent.intent_file} and {existing_intent.intent_file}. "
-                  f"Using the one in {existing_intent.intent_file}.")
+            self.log_warn("bot", f"[bot] Intent conflict: {intent.name} "
+                          f"exists in both {intent.intent_file} and "
+                          f"{existing_intent.intent_file}. "
+                          f"Using the one in {existing_intent.intent_file}.")
             return False
 
-        print(f"[bot] - Adding intent {intent.name}.")
+        self.log_debug("bot", f" - Adding intent {intent.name}.")
         self.intents[intent.name.lower()] = intent
 
     async def _start_cron_task(self):
@@ -273,7 +347,8 @@ class Bot:
         user.uid = document["uid"]
         user.identifiers = document["identifiers"]
 
-        print(f"- User loaded: {user.name}:{user.uid} - {user.identifiers}")
+        self.log_debug("bot", f"- User loaded: {user.name}:{user.uid} - "
+                       f"{user.identifiers}")
         return user
 
     async def _save_user(self, user):
@@ -312,7 +387,7 @@ class Bot:
         keep_running = True
         # out_msgs = []
 
-        print(f"[bot] User loop started for {user.current_address}")
+        self.log_debug("bot", f"User loop started for {user.current_address}")
 
         while keep_running:
             # print(f"[bot] Awaiting messages from user box {user.inbox!r}")
@@ -324,16 +399,16 @@ class Bot:
             # print("[bot] Checking intent")
             if intent:
                 await self._run_intent(user, intent, msg)
-                print("[bot] Intent completed.")
+                self.log_debug("bot", "Intent completed.")
             else:
-                print("[bot] Intent failed.")
+                self.log_debug("bot" "Intent failed.")
                 await msg.reply("I'm sorry, but I don't understand.",
                                 self.bot_inbox)
 
     async def _identify_msg_user(self, msg: azurabot.msg.Msg):
         user = msg.user
         await user.identify()
-        print(f"[bot] User identified: {user}")
+        self.log_debug("bot", f"User identified: {user}")
         return user
 
     async def _filter_inc_msg(self, msg: azurabot.msg.Msg):
@@ -344,10 +419,10 @@ class Bot:
         intent_name = text.split(" ")[0]
         try:
             intent = self.intents[intent_name.lower()](self)
-            print(f"[bot] Intent: \"{intent_name}\"")
+            self.log_debug("bot", f"Intent: \"{intent_name}\"")
             return intent
         except KeyError:
-            print(f"[bot] No intent found for \"{intent_name}\"")
+            self.log_debug("bot", f"No intent found for \"{intent_name}\"")
             return None
 
     async def _run_intent(self, user: User, intent: Intent,
