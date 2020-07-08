@@ -149,30 +149,29 @@ class Bot:
     #
     # Public logging functions
     #
-    # There are several public logging functions:
-    #
-    # - log(self, section: str, text: str, level: int)
-    #   This is the main logging function. The others are convenience
-    #   functions, which are ultimately routed through this one.
-    #
-    # - log_crit(self, section: str, text: str)
-    # - log_err(self, section: str, text: str)
-    # - log_warn(self, section: str, text: str)
-    # - log_notice(self, section: str, text: str)
-    # - log_info(self, section: str, text: str)
-    # - log_debug(self, section: str, text: str)
-    #
-    # The main logging function ("log"), will probably log using the
-    # standard python logging module. So why have my own functions?
-    # The reason is that then I can add the "section" argument, which
-    # will make it possible to have different log levels for different
-    # sections. For example, I might want debugging information to be
-    # logged from the telegram module, but not from everything else.
 
     def log(self, section: str, text: str, level: int):
-        # print(f"Section: {section}")
-        # print(f"Level  : {level} ({self.log_level})")
-        # print(f"Text   : {text}")
+        """
+        There are several public logging functions:
+
+        - log(self, section: str, text: str, level: int)
+          This is the main logging function. The others are convenience
+          functions, which are ultimately routed through this one.
+
+        - log_crit(self, section: str, text: str)
+        - log_err(self, section: str, text: str)
+        - log_warn(self, section: str, text: str)
+        - log_notice(self, section: str, text: str)
+        - log_info(self, section: str, text: str)
+        - log_debug(self, section: str, text: str)
+
+        The main logging function ("log"), will probably log using the
+        standard python logging module. So why have my own functions?
+        The reason is that then I can add the "section" argument, which
+        will make it possible to have different log levels for different
+        sections. For example, I might want debugging information to be
+        logged from the telegram module, but not from everything else.
+        """
 
         if level > self.log_level:
             return
