@@ -76,13 +76,11 @@ class Bot:
         #
         # Step 2: Start all plugins
         #
-        self.log_notice("bot", "AzuraBot running.")
         await self._start_all_plugins()
 
         #
         # Step 3: Start all background tasks
         #
-        self.log_notice("bot", "AzuraBot running.")
         await self._start_cron_task()
 
         #
