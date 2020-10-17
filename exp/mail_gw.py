@@ -4,8 +4,8 @@
 
 import email
 import imaplib
-import quopri
 import smtplib
+import time
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -32,13 +32,18 @@ def main():
 
     bot = DemoBot()
 
-    handle_mail(imap_server, bot, imap_username, imap_passwd)
+    while True:
+        handle_mail(imap_server, bot, imap_username, imap_passwd)
+        time.sleep(60)
+
     imap_server.close()
     imap_server.logout()
 
 
 def imap_login(username: str, passwd: str):
     imap_server = imaplib.IMAP4_SSL(IMAP_SERVER)
+    print(f"Logging in with username '{username}', "
+          f"password '{passwd[0:2]}...{passwd[-2:-0]}'")
     imap_server.login(username, passwd)
     imap_server.select("inbox")
 
@@ -53,46 +58,56 @@ def handle_mail(imap_server, bot, username, passwd):
     for num in data[0].split():
         typ, data = imap_server.fetch(num, "(RFC822)")
 
-        print(f"Message {num}")
         msg = email.message_from_bytes(data[0][1])
         original = msg
-        print("From   :", msg["from"])
-        print("Subject:", msg["subject"])
-        print("Body:")
+        print("==== New message ==================================")
+        print("From:", msg["from"])
         for part in msg.walk():
             if part.get_content_type() == "text/plain":
-                body = part.get_payload()
+                body = part.get_payload(decode=True)
+                body = body.decode("utf-8")
 
                 first_line = body.split("\n")[0]
-
-                # https://stackoverflow.com/questions/52438871/how-to-get-email-in-utf-8
-
-                first_line = str(quopri.decodestring(first_line))
-                first_line.replace("\r", "")
-
-                # tmp_unicode = first_line.decode("latin-1", errors="ignore")
-                # first_line = str(tmp_unicode.encode("utf-8"))
 
         if len(first_line) == 0:
             print("Coulnd't find any contents in mail body.")
             continue
 
-        print("Question: " + first_line)
+        question = first_line
+        print("Question: " + question)
         response = bot.get_response(first_line)
         print("Answer: " + response)
 
         new = MIMEMultipart("mixed")
-        body = MIMEMultipart("alternative")
-        body.attach(MIMEText(f"Din fråga: {first_line}\r\n\r\n"
-                             f"Svar: {response}\r\n"))
-        new.attach(body)
+        # body = MIMEMultipart("alternative")
+
+        # text = f"Din fråga: {first_line}\n\nSvar: {response}\n"
+        html = f"""\
+        <html>
+          <body>
+            <p>Du frågade: {question}</p>
+            <p>Svar: {response}</p>
+          </body>
+        </html>
+        """
+
+        # new.attach(body)
 
         new["Message-ID"] = email.utils.make_msgid()
         new["In-Reply-To"] = original["Message-ID"]
         new["References"] = original["Message-ID"]
-        new["Subject"] = "Re: " + original["Subject"]
+        try:
+            new["Subject"] = "Re: " + original["Subject"]
+        except TypeError:
+            new["Subject"] = "Re: Din fråga"
+
         new["To"] = original["Reply-To"] or original["From"]
         new["From"] = "dialog4u.gateway@gmail.com"
+
+        # text_part = MIMEText(text, "plain")
+        html_part = MIMEText(html, "html")
+        # new.attach(text_part)
+        new.attach(html_part)
 
         new.attach(MIMEMessage(original))
 
@@ -102,6 +117,9 @@ def handle_mail(imap_server, bot, username, passwd):
                              original["Reply-To"] or original["From"],
                              new.as_string().encode("ascii"))
         smtp_server.quit()
+
+        imap_server.store(num, "+FLAGS", "\\Deleted")
+        imap_server.expunge()
 
 
 def test_bot():
@@ -145,6 +163,12 @@ class DemoBot():
              'encrypted-media; gyroscope; picture-in-picture" '
              'allowfullscreen></iframe>'],
 
+            ["Vad kan du göra",
+             "Vad har du för funktion",
+             "Vad är du till för",
+             "Jag kan svara på frågor om kampsporten Shorinji Kempo, "
+             "och om Shorinji Kempo-klubben i Karlstad."],
+
             # Hur blir man medlem
             ["Hur blir man medlem",
              "Hur blir man medlem i Shorinji Kempo",
@@ -156,6 +180,7 @@ class DemoBot():
              "Var kan jag anmäla mig",
              "Måste man anmäla sig",
              "När tar ni in nya medlemmar",
+             "Hur gör jag för att börja träna?"
              "Information om hur man blir medlem hittar du på "
              "<a href='http://shorinjikempo.net/traning/borja-trana'>"
              "sidan \"Börja träna\" på vår hemsida</a>."],
