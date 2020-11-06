@@ -34,7 +34,7 @@ def main():
 
     while True:
         handle_mail(imap_server, bot, imap_username, imap_passwd)
-        time.sleep(60)
+        time.sleep(20)
 
     imap_server.close()
     imap_server.logout()
@@ -85,7 +85,7 @@ def handle_mail(imap_server, bot, username, passwd):
         html = f"""\
         <html>
           <body>
-            <p>Du frågade: {question}</p>
+            <p>Du skrev: {question}</p>
             <p>Svar: {response}</p>
           </body>
         </html>
@@ -140,7 +140,80 @@ class DemoBot():
 
     def __init__(self):
         self.all_intents = []
-        training_data = [
+        callcenter_training_data = [
+            # Hej / Vad kan du göra?
+            ["Hej",
+             "Tjena",
+             "Hallå",
+             "Vad kan du göra",
+             "Vad kan du hjälpa till med",
+             "Vad är du till för",
+
+             "Hej! Jag är Call4U:s chatbot. Jag kan svara på diverse frågor "
+             "om öppettider, hjälpa till med att pausa prenummerationer, "
+             "och så vidare. "],
+
+            # Öppettider
+            ["När har ni öppet",
+             "Vad har ni för öppettider",
+             "Vilka är era öppet tider",
+             "När öppnar ni",
+             "Öppettider",
+             "Öppet tider",
+
+             "Vi har öppet vardagar 08:00 - 20:00."],
+
+            # Öppet på helgen?
+            ["Är det stängt på helgen",
+             "Har ni inte öppet på helgen",
+             "Är det stängt hela helgen",
+             "Vilka öppettider har ni på helgen",
+
+             "Vi har inte öppet på helgen - men jag finns här dygnet runt! "
+             "Skicka gärna dina frågor till mig, så ska jag försöka besvara "
+             "dem. Kan jag inte det, så kommer personalen att svara dig när "
+             "vårt kundcenter öppnar. "],
+
+            # Kontaktuppgifter
+            ["Vilka är era kontaktuppgifter",
+             "Kan jag få era kontakt uppgifter",
+             "Vad är ert telefonnummer",
+             "Vad har ni för telefon nummer",
+             "Kan man ringa er",
+
+             "Vårt telefonnummer är 020-1234567 - du är välkommen att ringa!"],
+
+            # Pausa en pernummeration
+            ["Jag vill pausa en prenummeration",
+             "Jag ska på semester och vill pausa en prenummeration",
+             "Jag vill göra ett uppehåll i en prenummeration",
+
+             "Inga problem, vi kan pausa en prenummeration ett tag. "
+             "Vilken tidning gäller det?"],
+
+            # "Jag vill pausa Svenska Dagbladet"
+            ["Svenska Dagbladet",
+             "Svenska dagbladet",
+             "svenska dagbladet",
+             "svenskan",
+             "Sydsvenskan",
+             "sydsvenskan",
+             "syd svenskan",
+
+             "Okej. Då pausar jag din prenummerationen kopplad till din "
+             "epostadress tills vidare. "
+             "Hör av dig när du vill att den återupptas igen."],
+
+            # Återuppta prenummeration
+            ["Jag vill återuppta min prenummeration",
+             "Nu vill jag ha tidningen igen",
+             "Kan jag få åter uppta prenummerationen igen",
+
+             "Absolut! Från och med imorgon kommer du att få din tidning hem "
+             "i brevlådan igen. Välkommen tillbaka!"]
+        ]
+
+        kempo_training_data = [
             # Hej
             ["Hej",
              "Tjena",
@@ -607,6 +680,8 @@ class DemoBot():
              "Barn under 13 år tränar för sig, och övriga tränar i "
              "vuxengruppen."]
         ]
+        training_data = callcenter_training_data
+
         self.train(training_data)
 
     def train(self, training_data=None):
