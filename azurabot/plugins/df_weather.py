@@ -73,8 +73,8 @@ class Plugin(Webhook):
         super().__init__(bot, config, name)
 
     async def run(self):
-        await self.start_serving(routes, cert_file_name="secret/cert1.pem",
-                                 privkey_file_name="secret/privkey1.pem")
+        await self.start_serving(routes, cert_file_name="secret/cert.pem",
+                                 privkey_file_name="secret/privkey.pem")
 
 
 class WeatherForecast:
