@@ -24,15 +24,19 @@ class Plugin:
         This is done by AsyncInterface's and ThreadedInterface's
         start() function, which typically should not be overridden.
         """
-        # self.log("This plugin doesn't have its own start() function.")
-        pass
+        self.bot.log_debug(self.name,
+                           "This plugin doesn't have its own start() "
+                           "function.")
 
     async def run(self):
         """
         Called by the plugin's start() function. Ordinary plugins
         should put their code here.
         """
-        self.log("This plugin doesn't have its onw run() function.")
+        self.bot.log_warn(self.name,
+                          "This plugin doesn't have its own run() function.")
 
     def log(self, msg):
-        print(f"[{self.name}] {msg}")
+        self.bot.log_warn(self.name, "Using deprecated azurabot.plugin.log "
+                          "function for following message:")
+        self.bot.log_info(self.name, msg)

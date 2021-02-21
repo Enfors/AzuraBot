@@ -56,15 +56,17 @@ class Plugin(AsyncInterface):
 
             if irc_msg.msg_type == "PRIVMSG" and \
                irc_msg.channel == self.nickname:
-                self.log(f"Private message: {irc_msg.sender}->"
-                         f"{irc_msg.channel}: {irc_msg.msg_text}")
+                self.bot.log_debug("irc",
+                                   f"Private message: {irc_msg.sender}->"
+                                   f"{irc_msg.channel}: {irc_msg.msg_text}")
                 await self.send_user_text_to_bot(user, irc_msg.msg_text)
 
             if irc_msg.msg_type == "PRIVMSG" and \
                irc_msg.channel != self.nickname:
-                self.log(f"Channel message: "
-                         f"{irc_msg.sender} @ {irc_msg.channel}: "
-                         f"{irc_msg.msg_text}")
+                self.bot.log_debug("irc",
+                                   f"Channel message: "
+                                   f"{irc_msg.sender} @ {irc_msg.channel}: "
+                                   f"{irc_msg.msg_text}")
 
     async def _send_loop(self):
         """This is the loop that sends messages from AzuraBot, that is,

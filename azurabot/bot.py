@@ -105,8 +105,8 @@ class Bot:
             raise AzuraBotError(f"There is no inbox registered for "
                                 f"'{interface} (address {address})")
 
-        self.log("bot", "Private message: AzuraBot->{address}: {msg.text}",
-                 LOG_LEVEL_INFO)
+        self.log_info("bot", f"==== Private message: "
+                      f"AzuraBot->{address}: {msg.text}")
         await inbox.put(msg)
 
     async def send_to_user(self, user: User, msg: Msg, address: str = None):
@@ -250,7 +250,7 @@ class Bot:
             pass
             msg = await self.bot_inbox.get()
             text = msg.text
-            self.log_info("bot", "Received text: '%s'" % text)
+            self.log_info("bot", "==== Received text: '%s'" % text)
 
             # The reason why we start a task here, is because in the
             # future, the functio _handle_inc_msg() might be slow -
@@ -321,6 +321,8 @@ class Bot:
             user = self.online_users[user.current_address]
 
         # print(f"Putting message in user box {user.inbox!r}")
+        self.log_debug("bot", f"Message response: "
+                       f"AzuraBot->{user.current_address}: {msg}")
         await user.inbox.put(msg)
 
     async def _login_user(self, user):
@@ -395,10 +397,11 @@ class Bot:
             intent = await self._select_intent(msg)
             # print("[bot] Checking intent")
             if intent:
+                self.log_info("bot", f"Intent starting: {intent.name}")
                 await self._run_intent(user, intent, msg)
-                self.log_debug("bot", "Intent completed.")
+                self.log_info("bot", "==== Intent completed.")
             else:
-                self.log_debug("bot" "Intent failed.")
+                self.log_info("bot" "==== Intent failed.")
                 await msg.reply("I'm sorry, but I don't understand.",
                                 self.bot_inbox)
 

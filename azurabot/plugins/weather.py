@@ -30,13 +30,22 @@ class WeatherIntent(Intent):
             location = await user.ask("For what location would you like "
                                       "a weather report?")
         else:
-            location = args[0]
+            location = " ".join(args)
 
         report = await self.get_report(location)
 
         if report["cod"] != "200":
-            await user.tell(f"Weather API call failed with error code "
-                            f"{report['cod']}: {report['message']}")
+            err_msg = (f"Weather API call for location '{location}' "
+                       f"failed with error code "
+                       f"{report['cod']}: {report['message']}")
+
+            if report["cod"] == "404":
+                self.bot.log_debug("weather", err_msg)
+                await user.tell(f"The weather service says it doesn't "
+                                f"know the location '{location.title()}'.")
+            else:
+                self.bot.log_warn("weather", err_msg)
+                await user.tell(err_msg)
             return
 
         messages = self.format_report(report)
