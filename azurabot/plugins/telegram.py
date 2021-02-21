@@ -42,16 +42,23 @@ Message structure:
 class Plugin(AsyncInterface):
 
     async def run(self):
-        self.bot.log_info("Telegram", "Telegram plugin started.")
+        self.bot.log_debug("Telegram", "Telegram plugin starting.")
         self.telegram_bot = Bot(token=token)
         self.dp = Dispatcher(self.telegram_bot)
         self.dp.register_message_handler(self._handle_inc_message)
         asyncio.create_task(self._send_loop())
+        asyncio.create_task(self._poll())
+        self.bot.log_info("telegram", "Telegram plugin started.")
+
+    async def _poll(self):
+        # This call (start_polling) used to be part of the run() function
+        # above, but it doesn't return - so I had to move it to its own
+        # function, so that I could create a task for it.
         await self.dp.start_polling()
 
     async def _handle_inc_message(self, message: types.Message):
         pprint.pprint(list(message))
-        await message.reply("It works!")
+        # await message.reply("It works!")
 
         username = message["chat"]["username"]
         telegram_uid = message["from"]["id"]
@@ -60,7 +67,7 @@ class Plugin(AsyncInterface):
         user = azurabot.user.User(self.bot,
                                   identifiers={"telegram": telegram_uid})
 
-        self.log(f"Message from {username}: '{text}'")
+        self.bot.log_info("Telegram", f"Message from {username}: '{text}'")
         await self.send_user_text_to_bot(user, text)
 
     async def _send_loop(self):
@@ -70,9 +77,12 @@ class Plugin(AsyncInterface):
 
         while keep_running:
             msg = await self.inbox.get()
-            self.log(f"_send_loop: message to send: {msg.text}")
             user = msg.user
-            await self._send_msg_to_telegram(user.identifiers["telegram"], msg)
+            self.bot.log_debug("Telegram",
+                               f"_send_loop: message to send: {msg.text}")
+            self.bot.log_debug("Telegram",
+                               f"_send_loop: user: {user}")
+            await self._send_msg_to_telegram(user, msg)
 
     async def _send_msg_to_telegram(self, user, msg):
         telegram_uid = user.identifiers["telegram"]

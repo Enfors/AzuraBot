@@ -246,8 +246,9 @@ class Bot:
     async def _main_loop(self):
         keep_running = True
 
+        self.log_debug("bot", "_main_loop() started.")
+
         while keep_running:
-            pass
             msg = await self.bot_inbox.get()
             text = msg.text
             self.log_info("bot", "==== Received text: '%s'" % text)
@@ -275,7 +276,6 @@ class Bot:
         for plugin in self.plugins:
             self.log_info("bot", f"Starting plugin {plugin.name}...")
             start_tasks.append(asyncio.create_task(plugin.start()))
-
             try:
                 plugin_intents = plugin.intents
 
@@ -284,6 +284,7 @@ class Bot:
                 pass
 
         await asyncio.gather(*start_tasks)
+        self.log_debug("bot", "All plugins started.")
 
     async def _add_intents(self, intents: list):
         for intent in intents:
